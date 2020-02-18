@@ -11,14 +11,24 @@ library(gt)
 
 setwd("~/Documents/courses/dg/stage_2")
 
+#Cubic function for transforming negative net values
+
+cbrt <- function(x) {
+  sign(x) * abs(x)^(1/3)
+}
+
 #Datasets 
 
 climate = read_csv("climate.csv")
 zillow = read_csv("zillow.csv")
+
 #library maps ? I forget
+
 counties <- st_as_sf(map("county", plot = FALSE, fill = TRUE))
+
 #libary usmap
-county_pop = data(countypop)
+
+countypop = countypop
 
 #The background / maps  
 
@@ -47,14 +57,9 @@ zillow$county = str_trim(sub("parish", "",zillow$county))
 
 climate = climate %>% 
   select(county = County, state = State, net = `Net Migration`, mig_rank = Rank) %>% 
-  mutate(county = tolower(county), state = tolower(state))
+  mutate(county = tolower(county), state = tolower(state), cb_net = cbrt(net))
   # states <- c(climate$state)
   # climate$state = state.abb[match(states,state.name)]
-
-
-zillow %>% 
-  filter(state == "louisiana")
-
 
 
   
@@ -64,11 +69,13 @@ c_climate = left_join(counties,climate, by=c("county", "state"))
 
 
 
-ggplot(climate, aes(net))+
+ggplot(climate, aes(cb_net))+
   geom_histogram()
 
 ggplot(zillow, aes(log10(zillow)))+
   geom_histogram()
+
+
 
 #plot
 ggplot(data = usa) +
@@ -79,8 +86,8 @@ ggplot(data = usa) +
 
 ggplot(data = usa) +
   geom_sf() +
-  geom_sf(data = c_climate, aes(fill = net )) +
-  scale_fill_gradient(name = "net") +
+  geom_sf(data = c_climate, aes(fill = cb_net )) +
+  scale_fill_gradient(name = "cb_net") +
   coord_sf(xlim = c(-125, -67), ylim = c(24.5, 50), expand = FALSE)
 
 climate %>% 
@@ -110,6 +117,10 @@ climate %>%
     footnote = "Evaluation on a Scale of 1 to 10", 
     locations = cells_title()
   )
+
+#gets fips my dude
+fips("CA", county = "orange")
+fips(state = "AL", county = "autauga")
   
 
 
