@@ -1,0 +1,1 @@
+document.write("<img src=\"https://cdn.uc.atwola.com/passbacks/728x90_DV_IAS_.jpg\"/>");

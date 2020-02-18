@@ -1,0 +1,1 @@
+BrandSafetyNadoscallback_61998836({"c": ["moat_safe", "gs_science_environ", "gs_society_misc"], "d": 5, "g": 0, "pcode": "quantcastv2691176990399", "r": 4922171649, "ct": 1})
