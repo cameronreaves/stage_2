@@ -17,27 +17,78 @@ shinyServer(function(input, output) {
             p
     })
     
-    output$top_10 <- render_gt({
-      climate_sf %>% 
-        filter(state_name == input$variable) %>% 
+    output$top_pos <- render_gt({
+      
+      
+      domain = climate_sf %>% 
+        filter(state_name == input$variable & !is.na(net)) %>%
+        filter(net == max(net) | net == min(net)) %>% 
         arrange(desc(net)) %>% 
-        head(n = 10) %>% 
+        pull(net)
+      
+      climate_sf %>% 
+        filter(state_name == input$variable & !is.na(net)) %>% 
+        arrange(desc(net)) %>% 
+        head(n = 5) %>% 
         select(-county_fips) %>%
         gt() %>% 
         tab_header(
-          title = "Top 10 Cities for Predicted In-Migration",
-          subtitle = "Cities with Positive Net Migration"
+          title = "Top 5 Counties for Predicted In-Migration",
+          subtitle = "Counties with Positive Net Migration"
         ) %>% 
         cols_hide(
           columns = vars(
             geometry)
         ) %>% 
+        data_color(
+          columns = vars(net),
+          colors = scales::col_numeric(
+            palette = c(
+              "#cfe8f3", "#73bfe2", "#1696d2", "#0a4c6a"), 
+            domain = c(domain[1], 0))
+        ) %>% 
         cols_label(
           county_name = "County",
           state_name = "State",
           net = "Net Migration",
-          cb_net = "Cube Root"
-        ) 
+          cb_net = "Cube Root")
+      
+    })
+    
+    output$top_neg <- render_gt({
+      
+      domain = climate_sf %>% 
+        filter(state_name == input$variable & !is.na(net)) %>%
+        filter(net == max(net) | net == min(net)) %>% 
+        arrange(desc(net)) %>% 
+        pull(net)
+      
+      climate_sf %>% 
+        filter(state_name == input$variable & !is.na(net)) %>% 
+        arrange(desc(net)) %>% 
+        tail(n = 5) %>% 
+        select(-county_fips) %>%
+        gt() %>% 
+        tab_header(
+          title = "Top 5 Counties for Predicted Out-Migration",
+          subtitle = "Counties with Negative Net Migration"
+        ) %>% 
+        cols_hide(
+          columns = vars(
+            geometry)
+        ) %>% 
+        data_color(
+          columns = vars(net),
+          colors = scales::col_numeric(
+            palette = c(
+              "#ca5800","#fdbf11", "#fdd870", "#fff2cf"), 
+            domain = c(0, domain[2]))
+        ) %>% 
+        cols_label(
+          county_name = "County",
+          state_name = "State",
+          net = "Net Migration",
+          cb_net = "Cube Root")
     })
 
 })
