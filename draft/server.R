@@ -1,11 +1,52 @@
 library(shiny)
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output) {
+  
+  theme = theme(
+    panel.background = element_blank(),
+    axis.ticks = element_blank(),
+    axis.text = element_blank(), 
+    text = element_text(family = "Lato")
+  )  
+  
+  domain <- reactive({
+    domain = climate_sf %>% 
+      filter(state_name == input$variable & !is.na(net)) %>%
+      filter(net == max(net) | net == min(net)) %>% 
+      arrange(desc(net)) %>% 
+      pull(net)
+  })
+  
+  stateInput <- reactive({
+      if(input$variable == "All"){
+        climate_sf
+      }
+    else{
+     climate_sf %>% 
+      filter(state_name == input$variable)
+    }
+  })
+  
+  # observe({
+  #   x <- input$inCheckboxGroup
+  #   
+  #   # Can use character(0) to remove all choices
+  #   if (is.null(x)){
+  #     x <- character(0)
+  #   }
+  #   
+  #   # Can also set the label and select items
+  #   updateSelectInput(session, "inSelect",
+  #                     label = paste("Select input label", length(x)),
+  #                     choices = x,
+  #                     selected = tail(x, 1)
+  #   )
+  # })
+  
+  
 
     output$state <- renderPlot({
-        climate_sf %>%
-            filter(state_name == input$variable) %>% 
+        stateInput() %>% 
             ggplot(aes()) +
             geom_sf(aes(fill = cb_net)) +
             labs(
@@ -14,20 +55,13 @@ shinyServer(function(input, output) {
                 fill = "Net Migration"
             ) +
             scale_fill_gradient2(low = "#fdbf11", high = "#0a4c6a") +
-            p
+            theme
     })
     
     output$top_pos <- render_gt({
       
-      
-      domain = climate_sf %>% 
-        filter(state_name == input$variable & !is.na(net)) %>%
-        filter(net == max(net) | net == min(net)) %>% 
-        arrange(desc(net)) %>% 
-        pull(net)
-      
-      climate_sf %>% 
-        filter(state_name == input$variable & !is.na(net)) %>% 
+      stateInput()%>% 
+        filter(!is.na(net)) %>% 
         arrange(desc(net)) %>% 
         head(n = 5) %>% 
         select(-county_fips) %>%
@@ -45,7 +79,7 @@ shinyServer(function(input, output) {
           colors = scales::col_numeric(
             palette = c(
               "#cfe8f3", "#73bfe2", "#1696d2", "#0a4c6a"), 
-            domain = c(domain[1], 0))
+            domain = c(domain()[1], 0))
         ) %>% 
         cols_label(
           county_name = "County",
@@ -57,14 +91,8 @@ shinyServer(function(input, output) {
     
     output$top_neg <- render_gt({
       
-      domain = climate_sf %>% 
-        filter(state_name == input$variable & !is.na(net)) %>%
-        filter(net == max(net) | net == min(net)) %>% 
-        arrange(desc(net)) %>% 
-        pull(net)
-      
-      climate_sf %>% 
-        filter(state_name == input$variable & !is.na(net)) %>% 
+        stateInput() %>%
+        filter(!is.na(net)) %>% 
         arrange(desc(net)) %>% 
         tail(n = 5) %>% 
         select(-county_fips) %>%
@@ -82,7 +110,7 @@ shinyServer(function(input, output) {
           colors = scales::col_numeric(
             palette = c(
               "#ca5800","#fdbf11", "#fdd870", "#fff2cf"), 
-            domain = c(0, domain[2]))
+            domain = c(0, domain()[2]))
         ) %>% 
         cols_label(
           county_name = "County",
