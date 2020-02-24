@@ -157,11 +157,21 @@ climate_top = climate %>%
 
 
 climate_top_m = full_join(zillow, opp_atlas, by = c("fips" = "cty")) %>% 
-  semi_join(climate_top %>% filter(net > 0), by = c("fips" = "f"))
+  semi_join(climate %>% filter(net > 0), by = c("fips" = "f"))
+
+climate_top_m = climate_top_m %>% 
+  mutate(above = h_income > 44000)
 
 climate_top_m %>% 
-  ggplot(aes(zillow, h_income))+
-  geom_point()
+  ggplot(aes(log10(zillow), h_income, color = above))+
+  geom_point() +
+  scale_color_manual(values = c("#fdbf11", "#ec008b")) +
+  theme(
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  text = element_text(family = "Lato")
+) +
+  scale_x_reverse()
 
 
 #####PLOTS 
