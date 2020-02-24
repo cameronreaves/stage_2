@@ -27,34 +27,35 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  observe({
-    x <- input$select
-
-    # Can use character(0) to remove all choices
-    if (is.null(x)){
-      x <- character(0)
-    }
-    
-    c = climate_sf %>% 
-      filter(state_name == x & net < 0) %>% 
-      pull(county_name) 
-    
-    # Can also set the label and select items
-    updateSelectInput(session, "inSelect",
-                      choices = c,
-                      selected = "California"
-    )
-  })
-  
-  coun <- reactive({
-    distance %>% 
-      filter(countyname1 == input$inSelect)
-  })
-  
-  
-  output$dis = renderTable({
-    coun()
-  })
+  #This is so cool but too complicated
+  # observe({
+  #   x <- input$select
+  # 
+  #   # Can use character(0) to remove all choices
+  #   if (is.null(x)){
+  #     x <- character(0)
+  #   }
+  #   
+  #   c = climate_sf %>% 
+  #     filter(state_name == x & net < 0) %>% 
+  #     pull(county_name) 
+  #   
+  #   # Can also set the label and select items
+  #   updateSelectInput(session, "inSelect",
+  #                     choices = c,
+  #                     selected = "California"
+  #   )
+  # })
+  # 
+  # coun <- reactive({
+  #   distance %>% 
+  #     filter(countyname1 == input$inSelect)
+  # })
+  # 
+  # 
+  # output$dis = renderTable({
+  #   coun()
+  # })
   
   
 

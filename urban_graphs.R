@@ -15,6 +15,7 @@ read_county = function(){
 counties_sf <- get_urbn_map("counties", sf = TRUE)
 
 include = c(
+"Washington",
 "California", 
 "Texas", 
 "Florida",
@@ -33,11 +34,11 @@ include = c(
 "Louisiana", 
 "Mississippi", 
 "Alabama", 
-"Washington", 
-"Oregon")
+"Oregon", 
+  "All")
 
 counties_sf = counties_sf %>% 
-  filter(state_name %in% c("California"))
+  filter(state_name %in% include)
 
 return(counties_sf)
 
@@ -109,18 +110,43 @@ return(opp_sf)
 
 
 
+read_distance = function(){
+  
+distance = read_csv("distance.csv")
+  
+distance_sf = counties_sf %>% 
+  left_join(distance, by = c("county_fips" = "county2")) %>% 
+  rename("county2" = county_fips, "state_name2" = state_name) %>% 
+  select(-fips_class, -state_abbv, -state_fips, -county_name, -mi_to_county)
 
+distance_sf = distance_sf %>% 
+  left_join(opp_atlas, by = c("county2" ="cty")) %>% 
+  select(-Name)
 
+distance_sf = distance_sf %>% 
+  left_join(zillow, by = c("county2" ="fips")) %>% 
+  select(-county, -state)
 
+distance_sf = distance_sf %>% 
+  anti_join(
+    climate %>% filter(net >= 0 | is.na(net)), by = c("county1" = "f"))
+
+return(distance_sf)
+
+}
 ######## READ IN THE DATA 
 
 zillow_sf = read_zillow()
 
-climate_sf = read_climate()
-
 counties_sf = read_county()
 
+
+climate_sf = read_climate()
+
+
 opp_sf = read_opp()
+
+distance_sf = read_distance()
 
 
 
@@ -128,6 +154,14 @@ climate_top = climate %>%
   filter(mig_rank < 16 | mig_rank > 1735) %>% 
   unite(col="name", county:state, sep = ",") %>% 
   mutate(name = as.factor(name))
+
+
+climate_top_m = full_join(zillow, opp_atlas, by = c("fips" = "cty")) %>% 
+  semi_join(climate_top %>% filter(net > 0), by = c("fips" = "f"))
+
+climate_top_m %>% 
+  ggplot(aes(zillow, h_income))+
+  geom_point()
 
 
 #####PLOTS 
@@ -169,12 +203,30 @@ climate_top %>%
   scale_fill_manual(values = c("#fdbf11", "#0a4c6a")) +
   labs(
     title = "Top 15 + / -  Migration by County", 
-    subtitle = ""
+    subtitle = "", 
+    fill = "Net Migration"
+  ) + 
+  theme(
+    panel.background = element_blank(),
+    axis.ticks = element_blank(),
+    text = element_text(family = "Lato"), 
+    legend.text = element_blank()
   )
 
 
 
 opp_sf %>% 
+  ggplot(aes()) +
+  geom_sf(aes(fill = log10(h_income))) +
+  labs(
+    title = "Upward Mobility by County", 
+    subtitle = "Median household income of children when adults", 
+    legend = "Household Income"
+  ) +
+  scale_fill_gradient(low = "#f5cbdf",high = "#761548")
+
+distance_sf %>% 
+  filter(countyname1 == "Fulton County" & state_name2 == "Georgia") %>% 
   ggplot(aes()) +
   geom_sf(aes(fill = log10(h_income))) +
   labs(
@@ -221,3 +273,74 @@ climate %>%
     net = "Net Migration",
     cb_net = "Cube Root"
   ) 
+
+
+domain = climate_sf %>% 
+  filter(state_name == "Florida" & !is.na(net)) %>%
+  filter(net == max(net) | net == min(net)) %>% 
+  arrange(desc(net)) %>% 
+  pull(net)
+
+climate_sf %>% 
+  filter(state_name == "Florida" & !is.na(net)) %>% 
+  arrange(desc(net)) %>% 
+  head(n = 5) %>% 
+  select(-county_fips) %>%
+  gt() %>% 
+  tab_header(
+    title = "Top 5 Counties for Predicted In-Migration",
+    subtitle = "Counties with Positive Net Migration"
+  ) %>% 
+  cols_hide(
+    columns = vars(
+      geometry)
+  ) %>% 
+  data_color(
+    columns = vars(net),
+    colors = scales::col_numeric(
+      palette = c(
+        "#cfe8f3", "#73bfe2", "#1696d2", "#0a4c6a"), 
+    domain = c(domain[1], 0))
+  ) %>% 
+  cols_label(
+    county_name = "County",
+    state_name = "State",
+    net = "Net Migration",
+    cb_net = "Cube Root")
+
+  
+  climate_sf %>% 
+    filter(state_name == "Florida" & !is.na(net)) %>% 
+    arrange(desc(net)) %>% 
+    tail(n = 5) %>% 
+    select(-county_fips) %>%
+    gt() %>% 
+    tab_header(
+      title = "Top 5 Counties for Predicted Out-Migration",
+      subtitle = "Counties with Negative Net Migration"
+    ) %>% 
+    cols_hide(
+      columns = vars(
+        geometry)
+    ) %>% 
+    data_color(
+      columns = vars(net),
+      colors = scales::col_numeric(
+        palette = c(
+         "#ca5800","#fdbf11", "#fdd870", "#fff2cf"), 
+        domain = c(0, domain[2]))
+      ) %>% 
+        cols_label(
+          county_name = "County",
+          state_name = "State",
+          net = "Net Migration",
+          cb_net = "Cube Root")
+  
+  
+
+  
+
+  
+  
+    
+    
