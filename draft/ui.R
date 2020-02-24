@@ -25,6 +25,15 @@ shinyUI(
                               )
                             )
                             ),
+                   tabPanel("Try",fluidPage(
+                     p("The checkbox group controls the select input"),
+                     selectInput("select", "SELECT",
+                                 include),
+                     selectInput("inSelect", "Select input",
+                                 c("Item A", "Item B", "Item C")), 
+                     tableOutput("dis")
+                        ) 
+                   ), 
                    tabPanel("About",
                             titlePanel("About"),
                             fluidRow(
