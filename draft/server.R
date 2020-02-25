@@ -133,6 +133,78 @@ shinyServer(function(input, output, session) {
           cb_net = "Cube Root")
     })
     
+    
+  output$bar <- renderPlot({
+    
+    climate_top %>% 
+      ggplot(aes(reorder(name, net),net, fill = (net > 0)))+
+      geom_bar(stat="identity") +
+      coord_flip() +
+      scale_fill_manual(values = c("#fdbf11", "#0a4c6a")) +
+      labs(
+        title = "Top 15 + / -  Migration by County", 
+        subtitle = "", 
+        fill = "Net Migration"
+      ) + 
+      theme(
+        panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        text = element_text(family = "Lato"), 
+        legend.text = element_blank()
+      )
+  })  
+    
+    
+  output$Agg <- renderPlot({
+    
+    climate_top_m %>% 
+      ggplot(aes(log10(zillow), h_income))+
+      geom_point(color = "#73bfe2", size = .5) +
+      theme(
+        panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        text = element_text(family = "Lato")
+      ) +
+      scale_x_reverse() +
+      geom_smooth(method='lm', se = FALSE) +
+      labs(
+        title = "ZHVI vs Upward Mobility", 
+        subtitle = "Aggregate", 
+        x = "ZHVI", 
+        y = "Household Income for Children Parents in 25th Percentile"
+      )
+  })
+  
+  output$Quart <- renderPlot({
+    climate_top_m %>% 
+      ggplot(aes(log10(zillow), h_income, color = as.factor(PCT)))+
+      geom_point(size = .5) +
+      scale_color_manual(values = c("#fdbf11", "#ec008b", "#000000", "#55b748")) +
+      theme(
+        panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        text = element_text(family = "Lato")
+      ) +
+      scale_x_reverse() +
+      geom_smooth(method='lm', se = FALSE) +
+      labs(
+        title = "ZHVI vs Household Income 25 percentile", 
+        subtitle = "Quartiles", 
+        color = "Quartiles", 
+        x = "ZHVI", 
+        y = "Household Income for Children Parents in 25th Percentile"
+      )
+  })
+  
+  
+  output$Best <- render_gt({
+    climate_top_m %>% 
+      arrange(ratio) %>% 
+      head(n = 10) %>%
+      select(Name, h_income, zillow, ratio) %>% 
+      gt()
+  })
+    
   
 
 })

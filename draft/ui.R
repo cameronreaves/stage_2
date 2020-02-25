@@ -2,12 +2,17 @@ library(shiny)
 
 shinyUI(
     navbarPage("Sea Level Rise",
-                   tabPanel("Project", 
-                            titlePanel("Net Migration resulting from Sea Level Rise in US. Counties by 2100"),
+                   tabPanel("Geo-Spatial",
+                            tags$div(
+                            titlePanel("Net Migration resulting from Sea Level Rise in US. Counties by 2100")
+                            ,style="text-align:center;"),
                             fluidPage( 
                                       fluidRow(
-                                        column(12,
-                                               htmlTemplate("by_state.html")
+                                        column(6,
+                                                 htmlTemplate("geo_1.html")
+                                        ), 
+                                        column(6,
+                                               htmlTemplate("geo_2.html")
                                         )
                                       ),
                               fluidRow(
@@ -25,17 +30,36 @@ shinyUI(
                               )
                             )
                             ),
-                   tabPanel("Try",fluidPage(
-                     p("The checkbox group controls the select input"),
-                     selectInput("select", "SELECT",
-                                 include),
-                     selectInput("inSelect", "Select input",
-                                 c("Item A", "Item B", "Item C")), 
-                     tableOutput("dis")
-                        ) 
+                   tabPanel("Charts",
+                            tags$div(
+                              titlePanel("Upward Mobility and Housing Prices in Net Positive Counties"),
+                               style="text-align:center;"),
+                            fluidPage(
+                     fluidRow(
+                       column(6,
+                              htmlTemplate("charts_1.html")
+                            ), 
+                       column(6, 
+                              htmlTemplate("charts_2.html")
+                              )
+                     ),
+                     fluidRow(column(6, 
+                                     plotOutput("bar")
+                                     ),
+                              column(6,
+                               tabsetPanel(type = "tabs",
+                                           tabPanel("All Counties", plotOutput("Agg")),
+                                           tabPanel("By Quartile", plotOutput("Quart")), 
+                                           tabPanel("Best Counties", tableOutput("Best"))
+                              )
+                            )
+                        )
+                     ) 
                    ), 
                    tabPanel("About",
-                            titlePanel("About"),
+                            tags$div(
+                              titlePanel("About the Data / About the Dude"),
+                              style="text-align:center;"),
                             fluidRow(
                               column(2),
                               column(8,
