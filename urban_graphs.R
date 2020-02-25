@@ -12,6 +12,7 @@ cbrt <- function(x) {
 }
 
 read_county = function(){
+
 counties_sf <- get_urbn_map("counties", sf = TRUE)
 
 include = c(
@@ -40,8 +41,6 @@ include = c(
 counties_sf = counties_sf %>% 
   filter(state_name %in% include)
 
-return(counties_sf)
-
 }
 
 #Zillow
@@ -62,14 +61,14 @@ zillow_sf = counties_sf %>%
     left_join(zillow, by = c("county_fips" = "fips")) %>% 
     select(-fips_class, -state_abbv, -state_fips, -county, -state)
 
-return(zillow_sf)
+zillow_sf
 
 }
 
 read_climate = function() {
   
 climate = read_csv("climate.csv")
-web_fips = read_csv("web_fips")
+web_fips = read_csv("web_fips.csv")
 
 states <- c(climate$State)
 climate$State = state.abb[match(states,state.name)] 
@@ -159,20 +158,48 @@ climate_top = climate %>%
 climate_top_m = full_join(zillow, opp_atlas, by = c("fips" = "cty")) %>% 
   semi_join(climate %>% filter(net > 0), by = c("fips" = "f"))
 
+
 climate_top_m = climate_top_m %>% 
-  mutate(above = h_income > 44000)
+  mutate(PCT = ntile(h_income, 4), ratio = zillow / h_income)
+
 
 climate_top_m %>% 
-  ggplot(aes(log10(zillow), h_income, color = above))+
-  geom_point() +
-  scale_color_manual(values = c("#fdbf11", "#ec008b")) +
+  ggplot(aes(log10(zillow), h_income, color = as.factor(PCT)))+
+  geom_point(size = .5) +
+  scale_color_manual(values = c("#fdbf11", "#ec008b", "#000000", "#55b748")) +
   theme(
   panel.background = element_blank(),
   axis.ticks = element_blank(),
   text = element_text(family = "Lato")
 ) +
-  scale_x_reverse()
+  scale_x_reverse() +
+  geom_smooth(method='lm', se = FALSE) +
+  labs(
+    title = "ZHVI vs Household Income 25 percentile", 
+    subtitle = "Quartiles", 
+    color = "Quartiles", 
+    x = "ZHVI", 
+    y = "Household Income for Children Parents in 25th Percentile"
+  )
 
+
+
+climate_top_m %>% 
+  ggplot(aes(log10(zillow), h_income))+
+  geom_point(color = "#73bfe2", size = .5) +
+  theme(
+    panel.background = element_blank(),
+    axis.ticks = element_blank(),
+    text = element_text(family = "Lato")
+  ) +
+  scale_x_reverse() +
+  geom_smooth(method='lm', se = FALSE) +
+  labs(
+    title = "ZHVI vs Upward Mobility", 
+    subtitle = "Aggregate", 
+    x = "ZHVI", 
+    y = "Household Income for Children Parents in 25th Percentile"
+  )
 
 #####PLOTS 
 
