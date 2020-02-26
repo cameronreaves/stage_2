@@ -1,33 +1,39 @@
 #libraries
-
 library(tidyverse)
 library(urbnmapr)
+library(openintro) # state abbr
+library(gt)
+library(stringr)
 
 
 #subset of counties that include only states along the coast of the United States
 
-include = c(
-  "Washington",
-  "California", 
-  "Texas", 
-  "Florida",
-  "Georgia",
-  "South Carolina", 
-  "North Carolina",
-  "Virginia",
-  "Maryland",
-  "Delaware",
-  "New Jersey",
-  "New York",
-  "Connecticut",
-  "Rhode Island",
-  "Massachusetts",
-  "New Hampshire", 
-  "Louisiana", 
-  "Mississippi", 
-  "Alabama", 
-  "Oregon", 
-  "All")
+get_include = function(){
+  include = c(
+    "Washington",
+    "California", 
+    "Texas", 
+    "Florida",
+    "Georgia",
+    "South Carolina", 
+    "North Carolina",
+    "Virginia",
+    "Maryland",
+    "Delaware",
+    "New Jersey",
+    "New York",
+    "Connecticut",
+    "Rhode Island",
+    "Massachusetts",
+    "New Hampshire", 
+    "Louisiana", 
+    "Mississippi", 
+    "Alabama", 
+    "Oregon", 
+    "All")
+  
+  return(include)
+}
 
 #function used to cube root the net migration for a county, can't transform negative values with log
 
@@ -38,12 +44,12 @@ cbrt <- function(x) {
 
 #returns filtered sf dataframe of of US counties -- only coastal cities 
 
-read_county = function(){
+read_counties = function(){
   
   counties_sf <- get_urbn_map("counties", sf = TRUE)
   
   counties_sf = counties_sf %>% 
-    filter(state_name %in% include)
+    filter(state_name %in% get_include())
   
 }
 
@@ -94,6 +100,23 @@ read_climate = function() {
   
 }
 
+get_top = function(){
+  
+  climate_top = climate %>% 
+    filter(mig_rank < 16 | mig_rank > 1735) %>% 
+    unite(col="name", county:state, sep = ",") %>% 
+    mutate(name = as.factor(name))
+}
+
+merge_climate = function(){
+  
+  climate_merge = full_join(zillow, opp_atlas, by = c("fips" = "cty")) %>% 
+    semi_join(climate %>% filter(net > 0), by = c("fips" = "f"))
+  
+  
+  climate_merge %>% 
+    mutate(PCT = ntile(h_income, 4), ratio = zillow / h_income)
+}
 
 #returns sf dataframe that joins climate dataframe with counties sf dataframe
 
@@ -108,7 +131,7 @@ join_climate = function(climate, counties){
 }
 
 save_as_dataframe = function(data, name){
-  save(data,file=paste0(name, ".Rda", sep = ""))
+  saveRDS(data,file=paste0(name, ".Rda", sep = ""))
 }
 
 

@@ -1,4 +1,7 @@
 library(shiny)
+source("helper.R", local = TRUE)
+#from helper
+include = get_include()
 
 shinyUI(
     navbarPage("Sea Level Rise",
